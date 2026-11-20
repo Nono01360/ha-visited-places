@@ -1,0 +1,87 @@
+add_place:
+  name: Ajouter un lieu
+  description: Ajoute un lieu précis par coordonnées GPS ou géocodage d'adresse.
+  fields:
+    name:
+      name: Nom du lieu
+      required: true
+      example: "Parc de la Tête d'Or"
+      selector:
+        text:
+    query:
+      name: Recherche d'adresse (si pas de GPS)
+      required: false
+      example: "Parc de la Tête d'Or, Lyon"
+      selector:
+        text:
+    latitude:
+      name: Latitude
+      required: false
+      selector:
+        number:
+          min: -90
+          max: 90
+          step: 0.000001
+          mode: box
+    longitude:
+      name: Longitude
+      required: false
+      selector:
+        number:
+          min: -180
+          max: 180
+          step: 0.000001
+          mode: box
+    visited:
+      name: Déjà visité
+      default: true
+      selector:
+        boolean:
+    category:
+      name: Catégorie
+      default: "Ville"
+      selector:
+        select:
+          options:
+            - "Ville"
+            - "Monument"
+            - "Nature"
+            - "Restaurant"
+            - "Musée"
+            - "Autre"
+    person:
+      name: Personne / Groupe
+      default: "Commun"
+      selector:
+        text:
+    notes:
+      name: Notes
+      required: false
+      selector:
+        text:
+          multiline: true
+
+toggle_visited:
+  name: Basculer le statut visité
+  description: Marque un lieu comme visité ou à visiter.
+  fields:
+    place_id:
+      name: Identifiant du lieu
+      required: true
+      selector:
+        text:
+    visited:
+      name: Statut forcé (optionnel)
+      required: false
+      selector:
+        boolean:
+
+remove_place:
+  name: Supprimer un lieu
+  description: Supprime définitivement un lieu enregistré.
+  fields:
+    place_id:
+      name: Identifiant du lieu
+      required: true
+      selector:
+        text:
