@@ -5,7 +5,7 @@ STORAGE_KEY = f"{DOMAIN}_storage"
 STORAGE_VERSION = 1
 
 FRONTEND_SCRIPT_BASE = f"/{DOMAIN}/visited-places-card.js"
-FRONTEND_SCRIPT_URL = f"{FRONTEND_SCRIPT_BASE}?v=1.3.0"
+FRONTEND_SCRIPT_URL = f"{FRONTEND_SCRIPT_BASE}?v=1.3.1"
 
 CONF_DEFAULT_LAT = "default_latitude"
 CONF_DEFAULT_LON = "default_longitude"

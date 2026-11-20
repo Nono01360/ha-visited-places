@@ -30,12 +30,12 @@ class VisitedPlacesCardEditor extends HTMLElement {
             style="padding:8px; border-radius:8px; border:1px solid var(--divider-color); background:var(--card-background-color); color:var(--primary-text-color);" />
         </label>
         <label style="display:flex; flex-direction:column; gap:4px; font-weight:500;">
-          Thème visuel de la carte (100 % gratuit, sans clé API)
+          Thème visuel de la carte (sans clé API)
           <select id="ed-style"
             style="padding:8px; border-radius:8px; border:1px solid var(--divider-color); background:var(--card-background-color); color:var(--primary-text-color);">
-            <option value="beenthere_light" ${(this._config.map_style || "beenthere_light") === "beenthere_light" ? "selected" : ""}>BeenThere Épuré Clair (CARTO Positron)</option>
-            <option value="beenthere_dark" ${this._config.map_style === "beenthere_dark" ? "selected" : ""}>BeenThere Sombre (CARTO Dark Matter)</option>
-            <option value="voyager" ${this._config.map_style === "voyager" ? "selected" : ""}>Détaillé Pastel (CARTO Voyager)</option>
+            <option value="beenthere_light" ${(this._config.map_style || "beenthere_light") === "beenthere_light" ? "selected" : ""}>BeenThere Épuré Clair (Esri Light Gray)</option>
+            <option value="beenthere_dark" ${this._config.map_style === "beenthere_dark" ? "selected" : ""}>BeenThere Sombre (Esri Dark Gray)</option>
+            <option value="street" ${this._config.map_style === "street" ? "selected" : ""}>Plan Détaillé (Esri World Street)</option>
             <option value="satellite" ${this._config.map_style === "satellite" ? "selected" : ""}>Satellite (Esri World Imagery)</option>
           </select>
         </label>
@@ -86,6 +86,7 @@ class VisitedPlacesCard extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this._map = null;
     this._tileLayer = null;
+    this._labelsLayer = null;
     this._markersLayer = null;
     this._filter = "all";
     this._personFilter = "all";
@@ -133,7 +134,6 @@ class VisitedPlacesCard extends HTMLElement {
     if (this._hass.states[this._config.entity]) {
       return this._hass.states[this._config.entity];
     }
-    // Fallback automatique si l'utilisateur avait l'ancien nom sensor.visited_places_lieux_visites
     const fallback = Object.keys(this._hass.states).find((id) =>
       id.startsWith("sensor.visited_places")
     );
@@ -161,31 +161,31 @@ class VisitedPlacesCard extends HTMLElement {
     const style = this._config.map_style || "beenthere_light";
     if (style === "beenthere_dark") {
       return {
-        url: "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
-        labelsUrl: "https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png",
-        attr: "&copy; OpenStreetMap &copy; CARTO",
-        subdomains: "abcd",
+        url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+        labelsUrl: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
+        attr: "&copy; Esri, HERE, Garmin",
+        maxZoom: 16,
       };
     }
-    if (style === "voyager") {
+    if (style === "street" || style === "voyager") {
       return {
-        url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-        attr: "&copy; OpenStreetMap &copy; CARTO",
-        subdomains: "abcd",
+        url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+        attr: "&copy; Esri, HERE, Garmin",
+        maxZoom: 18,
       };
     }
     if (style === "satellite") {
       return {
         url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
         attr: "&copy; Esri",
-        subdomains: [],
+        maxZoom: 18,
       };
     }
-    // Style BeenThere épuré par défaut (CARTO Positron sans clé API)
     return {
-      url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-      attr: "&copy; OpenStreetMap &copy; CARTO",
-      subdomains: "abcd",
+      url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+      labelsUrl: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
+      attr: "&copy; Esri, HERE, Garmin",
+      maxZoom: 16,
     };
   }
 
@@ -200,10 +200,7 @@ class VisitedPlacesCard extends HTMLElement {
       this._labelsLayer = null;
     }
     const cfg = this._getTileConfig();
-    const opts = { attribution: cfg.attr, maxZoom: 19 };
-    if (cfg.subdomains && cfg.subdomains.length) {
-      opts.subdomains = cfg.subdomains;
-    }
+    const opts = { attribution: cfg.attr, maxZoom: cfg.maxZoom || 18 };
     this._tileLayer = window.L.tileLayer(cfg.url, opts).addTo(this._map);
     if (cfg.labelsUrl) {
       this._labelsLayer = window.L.tileLayer(cfg.labelsUrl, opts).addTo(this._map);
@@ -245,7 +242,6 @@ class VisitedPlacesCard extends HTMLElement {
           --bt-visited-bg: rgba(16, 185, 129, 0.14);
           --bt-wish: #f59e0b;
           --bt-wish-bg: rgba(245, 158, 11, 0.14);
-          --bt-accent: #0f766e;
         }
         ha-card {
           overflow: hidden;
@@ -254,7 +250,6 @@ class VisitedPlacesCard extends HTMLElement {
           border-radius: 16px;
           position: relative;
         }
-        /* En-tête style BeenThere */
         .bt-header {
           display: flex;
           flex-wrap: wrap;
@@ -310,7 +305,6 @@ class VisitedPlacesCard extends HTMLElement {
         .pill.wish { background: var(--bt-wish-bg); color: #d97706; }
         .pill.countries { background: rgba(59, 130, 246, 0.12); color: #2563eb; }
 
-        /* Barre d'ajout et filtres */
         .bt-bar {
           display: flex;
           flex-wrap: wrap;
@@ -374,7 +368,6 @@ class VisitedPlacesCard extends HTMLElement {
           color: #fff;
         }
 
-        /* Carte & Pin BeenThere avec nom permanent */
         .map-wrapper {
           position: relative;
           width: 100%;
@@ -411,7 +404,7 @@ class VisitedPlacesCard extends HTMLElement {
           margin-top: 3px;
           padding: 2px 7px;
           border-radius: 999px;
-          background: rgba(255, 255, 255, 0.94);
+          background: rgba(255, 255, 255, 0.95);
           color: #1f2937;
           font-size: 11px;
           font-weight: 700;
@@ -423,7 +416,6 @@ class VisitedPlacesCard extends HTMLElement {
           text-overflow: ellipsis;
         }
 
-        /* Liste des lieux (Tiroir BeenThere) */
         .bt-list-bar {
           display: flex;
           justify-content: space-between;
@@ -476,18 +468,7 @@ class VisitedPlacesCard extends HTMLElement {
           font-size: 0.76rem;
           color: var(--secondary-text-color);
         }
-        .place-actions {
-          display: flex;
-          gap: 6px;
-          margin-top: 2px;
-        }
-        .place-actions button {
-          padding: 4px 8px;
-          font-size: 0.75rem;
-          border-radius: 7px;
-        }
 
-        /* Modale clic sur carte */
         .modal {
           display: none;
           padding: 10px 14px;
@@ -786,7 +767,6 @@ class VisitedPlacesCard extends HTMLElement {
     listEl.innerHTML = "";
 
     filtered.forEach((place) => {
-      // 1. Marqueur carte avec nom visible
       const marker = window.L.marker([place.latitude, place.longitude], {
         icon: this._createBeenTherePin(place),
       });
@@ -828,7 +808,6 @@ class VisitedPlacesCard extends HTMLElement {
       marker.bindPopup(container);
       marker.addTo(this._markersLayer);
 
-      // 2. Carte dans le tiroir BeenThere
       const card = document.createElement("div");
       card.className = "place-card";
       card.innerHTML = `
