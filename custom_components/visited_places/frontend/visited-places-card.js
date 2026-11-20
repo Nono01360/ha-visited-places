@@ -1,5 +1,248 @@
 const DEFAULT_ENTITY = "sensor.visited_places";
 
+const LEAFLET_CORE_CSS = `
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-pane > svg,
+.leaflet-pane > canvas,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.leaflet-container {
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  background: #e5e7eb;
+  outline-offset: 1px;
+  font-family: inherit;
+  font-size: 12px;
+}
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.leaflet-tile::selection {
+  background: transparent;
+}
+.leaflet-safari .leaflet-tile {
+  image-rendering: -webkit-optimize-contrast;
+}
+.leaflet-safari .leaflet-tile-container {
+  width: 1600px;
+  height: 1600px;
+  -webkit-transform-origin: 0 0;
+}
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+  display: block;
+}
+.leaflet-container .leaflet-overlay-pane svg,
+.leaflet-container .leaflet-marker-pane img,
+.leaflet-container .leaflet-shadow-pane img,
+.leaflet-container .leaflet-tile-pane img,
+.leaflet-container img.leaflet-image-layer,
+.leaflet-container .leaflet-tile {
+  max-width: none !important;
+  max-height: none !important;
+  width: auto;
+  padding: 0;
+}
+.leaflet-container img.leaflet-tile {
+  mix-blend-mode: plus-lighter;
+}
+.leaflet-container.leaflet-touch-zoom {
+  -ms-touch-action: pan-x pan-y;
+  touch-action: pan-x pan-y;
+}
+.leaflet-container.leaflet-touch-drag {
+  -ms-touch-action: pinch-zoom;
+  touch-action: none;
+  touch-action: pinch-zoom;
+}
+.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom {
+  -ms-touch-action: none;
+  touch-action: none;
+}
+.leaflet-tile {
+  filter: inherit;
+  visibility: hidden;
+}
+.leaflet-tile-loaded {
+  visibility: inherit;
+}
+.leaflet-zoom-box {
+  width: 0;
+  height: 0;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  z-index: 800;
+}
+.leaflet-pane { z-index: 400; }
+.leaflet-tile-pane { z-index: 200; }
+.leaflet-overlay-pane { z-index: 400; }
+.leaflet-shadow-pane { z-index: 500; }
+.leaflet-marker-pane { z-index: 600; }
+.leaflet-tooltip-pane { z-index: 650; }
+.leaflet-popup-pane { z-index: 700; }
+.leaflet-map-pane canvas { z-index: 100; }
+.leaflet-map-pane svg { z-index: 200; }
+.leaflet-control {
+  position: relative;
+  z-index: 800;
+  pointer-events: visiblePainted;
+  pointer-events: auto;
+}
+.leaflet-top,
+.leaflet-bottom {
+  position: absolute;
+  z-index: 1000;
+  pointer-events: none;
+}
+.leaflet-top { top: 0; }
+.leaflet-right { right: 0; }
+.leaflet-bottom { bottom: 0; }
+.leaflet-left { left: 0; }
+.leaflet-control { float: left; clear: both; }
+.leaflet-right .leaflet-control { float: right; }
+.leaflet-top .leaflet-control { margin-top: 10px; }
+.leaflet-bottom .leaflet-control { margin-bottom: 10px; }
+.leaflet-left .leaflet-control { margin-left: 10px; }
+.leaflet-right .leaflet-control { margin-right: 10px; }
+.leaflet-fade-anim .leaflet-popup {
+  opacity: 0;
+  transition: opacity 0.2s linear;
+}
+.leaflet-fade-anim .leaflet-map-pane .leaflet-popup {
+  opacity: 1;
+}
+.leaflet-zoom-animated {
+  transform-origin: 0 0;
+}
+svg.leaflet-zoom-animated {
+  will-change: transform;
+}
+.leaflet-zoom-anim .leaflet-zoom-animated {
+  transition: transform 0.25s cubic-bezier(0,0,0.25,1);
+}
+.leaflet-zoom-anim .leaflet-tile,
+.leaflet-pan-anim .leaflet-tile {
+  transition: none;
+}
+.leaflet-zoom-anim .leaflet-zoom-hide {
+  visibility: hidden;
+}
+.leaflet-interactive { cursor: pointer; }
+.leaflet-grab {
+  cursor: -webkit-grab;
+  cursor: -moz-grab;
+  cursor: grab;
+}
+.leaflet-crosshair,
+.leaflet-crosshair .leaflet-interactive {
+  cursor: crosshair;
+}
+.leaflet-dragging .leaflet-grab,
+.leaflet-dragging .leaflet-grab .leaflet-interactive,
+.leaflet-dragging .leaflet-marker-draggable {
+  cursor: move;
+  cursor: -webkit-grabbing;
+  cursor: -moz-grabbing;
+  cursor: grabbing;
+}
+.leaflet-bar {
+  box-shadow: 0 1px 5px rgba(0,0,0,0.35);
+  border-radius: 6px;
+}
+.leaflet-bar a {
+  background-color: #fff;
+  border-bottom: 1px solid #ccc;
+  width: 26px;
+  height: 26px;
+  line-height: 26px;
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  color: black;
+}
+.leaflet-bar a:hover { background-color: #f4f4f4; }
+.leaflet-bar a:first-child { border-top-left-radius: 6px; border-top-right-radius: 6px; }
+.leaflet-bar a:last-child { border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; border-bottom: none; }
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+  font: bold 18px 'Lucida Console', Monaco, monospace;
+  text-indent: 1px;
+}
+.leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.75);
+  padding: 0 5px;
+  color: #333;
+  font-size: 10px;
+}
+.leaflet-popup {
+  position: absolute;
+  text-align: center;
+  margin-bottom: 20px;
+}
+.leaflet-popup-content-wrapper {
+  padding: 1px;
+  text-align: left;
+  border-radius: 12px;
+  background: white;
+  color: #1f2937;
+  box-shadow: 0 3px 14px rgba(0,0,0,0.35);
+}
+.leaflet-popup-content {
+  margin: 12px 16px;
+  line-height: 1.4;
+  font-size: 13px;
+  min-height: 1px;
+}
+.leaflet-popup-tip-container {
+  width: 40px;
+  height: 20px;
+  position: absolute;
+  left: 50%;
+  margin-top: -1px;
+  margin-left: -20px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.leaflet-popup-tip {
+  width: 17px;
+  height: 17px;
+  padding: 1px;
+  margin: -10px auto 0;
+  pointer-events: auto;
+  transform: rotate(45deg);
+  background: white;
+  box-shadow: 0 3px 14px rgba(0,0,0,0.35);
+}
+.leaflet-popup-close-button {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  border: none;
+  text-align: center;
+  width: 20px;
+  height: 20px;
+  font: 16px/20px Tahoma, Verdana, sans-serif;
+  color: #757575;
+  text-decoration: none;
+  background: transparent;
+  cursor: pointer;
+}
+`;
+
 class VisitedPlacesCardEditor extends HTMLElement {
   setConfig(config) {
     this._config = { ...config };
@@ -163,67 +406,45 @@ class VisitedPlacesCard extends HTMLElement {
     return fallback ? this._hass.states[fallback] : null;
   }
 
-  _getLocalLeafletUrls() {
-    const frontendUrl =
-      this._hass?.config?.frontend_url ||
-      document.querySelector("home-assistant")?.hass?.config?.frontend_url ||
-      "/frontend_latest";
-    return {
-      js: `${frontendUrl}/leaflet.js`,
-      css: `${frontendUrl}/leaflet.css`,
-    };
-  }
-
   async _resolveLeaflet() {
-    if (window.L) return window.L;
+    if (window.L && typeof window.L.map === "function") return window.L;
 
-    // 1. Tente de charger le bundle Leaflet natif déjà présent dans Home Assistant (0 ms réseau externe)
     if (!window._btLeafletPromise) {
       window._btLeafletPromise = (async () => {
-        const local = this._getLocalLeafletUrls();
-        this._injectLeafletCss(local.css);
+        const frontendUrl =
+          this._hass?.config?.frontend_url ||
+          document.querySelector("home-assistant")?.hass?.config?.frontend_url ||
+          "/frontend_latest";
+        const localJs = `${frontendUrl}/leaflet.js`;
 
         try {
-          const mod = await import(/* @vite-ignore */ local.js);
+          const mod = await import(/* @vite-ignore */ localJs);
           const L = mod.default || mod.L || window.L;
           if (L && typeof L.map === "function") {
             window.L = L;
             return L;
           }
-        } catch (_e) {
-          // Fallback script local puis CDN rapide si nécessaire
-        }
+        } catch (_e) {}
 
         const loadScript = (src) =>
           new Promise((resolve, reject) => {
             const s = document.createElement("script");
             s.src = src;
             s.async = true;
-            s.onload = () => (window.L ? resolve(window.L) : reject());
+            s.onload = () => (window.L && typeof window.L.map === "function" ? resolve(window.L) : reject());
             s.onerror = reject;
             document.head.appendChild(s);
           });
 
         try {
-          return await loadScript(local.js);
+          return await loadScript(localJs);
         } catch (_e2) {
-          this._injectLeafletCss("https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css");
           return await loadScript("https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js");
         }
       })();
     }
 
     return window._btLeafletPromise;
-  }
-
-  _injectLeafletCss(href) {
-    if (!this.shadowRoot.getElementById("bt-leaflet-css")) {
-      const link = document.createElement("link");
-      link.id = "bt-leaflet-css";
-      link.rel = "stylesheet";
-      link.href = href;
-      this.shadowRoot.prepend(link);
-    }
   }
 
   _getTileConfig() {
@@ -319,15 +540,15 @@ class VisitedPlacesCard extends HTMLElement {
   }
 
   _renderShell() {
-    const localCss = this._getLocalLeafletUrls().css;
     this.shadowRoot.innerHTML = `
-      <link id="bt-leaflet-css" rel="stylesheet" href="${localCss}" />
       <style>
+        ${LEAFLET_CORE_CSS}
+
         :host {
           display: block;
           width: 100%;
           height: 100%;
-          min-height: 220px;
+          min-height: 200px;
           box-sizing: border-box;
           --bt-visited: #10b981;
           --bt-visited-bg: rgba(16, 185, 129, 0.14);
@@ -464,12 +685,11 @@ class VisitedPlacesCard extends HTMLElement {
           color: #fff;
         }
 
-        /* La zone carte occupe exactement l'espace restant attribué par Home Assistant */
         .map-wrapper {
           position: relative;
           flex: 1 1 auto;
           width: 100%;
-          min-height: 160px;
+          min-height: 140px;
           overflow: hidden;
         }
         #map {
@@ -484,7 +704,7 @@ class VisitedPlacesCard extends HTMLElement {
           position: absolute;
           top: 10px;
           right: 10px;
-          z-index: 500;
+          z-index: 850;
           background: var(--card-background-color);
           color: var(--primary-text-color);
           border: 1px solid var(--divider-color);
@@ -554,7 +774,7 @@ class VisitedPlacesCard extends HTMLElement {
           background: var(--card-background-color);
           border-top: 1px solid var(--divider-color);
           box-shadow: 0 -4px 16px rgba(0,0,0,0.18);
-          z-index: 600;
+          z-index: 900;
         }
         .bt-places-list.open {
           display: grid;
@@ -836,7 +1056,6 @@ class VisitedPlacesCard extends HTMLElement {
       mapEl.addEventListener(evtName, (e) => e.stopPropagation(), { passive: true });
     });
 
-    // Adapte automatiquement Leaflet dès que Home Assistant redimensionne la carte ou la grille
     this._resizeObserver = new ResizeObserver(() => {
       if (this._map) {
         this._map.invalidateSize(false);
@@ -853,6 +1072,10 @@ class VisitedPlacesCard extends HTMLElement {
         `📍 ${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`;
       this.shadowRoot.getElementById("click-modal").classList.add("open");
       this.shadowRoot.getElementById("click-name").focus();
+    });
+
+    requestAnimationFrame(() => {
+      if (this._map) this._map.invalidateSize(false);
     });
 
     this._syncPeopleOptions();
@@ -1003,7 +1226,6 @@ class VisitedPlacesCard extends HTMLElement {
     });
   }
 
-  /* Laisse Home Assistant calculer naturellement la taille sans imposer ni déborder */
   getCardSize() {
     return 4;
   }

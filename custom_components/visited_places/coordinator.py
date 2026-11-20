@@ -53,7 +53,7 @@ class VisitedPlacesCoordinator(DataUpdateCoordinator[dict[str, dict[str, Any]]])
     async def async_geocode(self, query: str) -> tuple[float, float, str, str]:
         """Géocode une adresse ou un nom de lieu via OpenStreetMap Nominatim."""
         session = async_get_clientsession(self.hass)
-        headers = {"User-Agent": "HomeAssistant-VisitedPlaces/1.4.0 (contact@local.ha)"}
+        headers = {"User-Agent": "HomeAssistant-VisitedPlaces/1.4.1 (contact@local.ha)"}
         params = {"q": query, "format": "json", "addressdetails": 1, "limit": 1, "accept-language": "fr"}
 
         async with session.get(
@@ -81,7 +81,7 @@ class VisitedPlacesCoordinator(DataUpdateCoordinator[dict[str, dict[str, Any]]])
         """Récupère l'adresse et le pays pour des coordonnées GPS."""
         try:
             session = async_get_clientsession(self.hass)
-            headers = {"User-Agent": "HomeAssistant-VisitedPlaces/1.4.0 (contact@local.ha)"}
+            headers = {"User-Agent": "HomeAssistant-VisitedPlaces/1.4.1 (contact@local.ha)"}
             params = {"lat": lat, "lon": lon, "format": "json", "addressdetails": 1, "accept-language": "fr"}
             async with session.get(
                 NOMINATIM_REVERSE_URL, params=params, headers=headers, timeout=8
